@@ -5,7 +5,7 @@ import os
 
 FICHIER = "materiel.json"
 
-# Chargement et sauvegarde
+
 def charger_materiel():
     if os.path.exists(FICHIER):
         with open(FICHIER, 'r') as f:
@@ -16,7 +16,6 @@ def sauvegarder_materiel(liste):
     with open(FICHIER, 'w') as f:
         json.dump(liste, f, indent=4)
 
-# Fonctions GUI
 def rafraichir_liste():
     liste_materiel.delete(0, tk.END)
     for item in materiels:
@@ -62,14 +61,12 @@ def rechercher_materiel():
             texte = f"{item['nom']} - {item['categorie']} - {item['quantite']} unités"
             liste_materiel.insert(tk.END, texte)
 
-# Initialisation
+
 materiels = charger_materiel()
 
-# Interface principale
 fenetre = tk.Tk()
 fenetre.title("Gestion de Matériel")
 
-# Champs de saisie
 tk.Label(fenetre, text="Nom:").grid(row=0, column=0)
 entry_nom = tk.Entry(fenetre)
 entry_nom.grid(row=0, column=1)
@@ -82,7 +79,7 @@ tk.Label(fenetre, text="Quantité:").grid(row=2, column=0)
 entry_quantite = tk.Entry(fenetre)
 entry_quantite.grid(row=2, column=1)
 
-# Boutons
+
 btn_ajouter = tk.Button(fenetre, text="Ajouter", command=ajouter_materiel)
 btn_ajouter.grid(row=3, column=0, columnspan=2, pady=5)
 
@@ -92,7 +89,7 @@ btn_supprimer.grid(row=4, column=0, columnspan=2)
 btn_rechercher = tk.Button(fenetre, text="Rechercher", command=rechercher_materiel)
 btn_rechercher.grid(row=5, column=0, columnspan=2, pady=5)
 
-# Liste
+
 liste_materiel = tk.Listbox(fenetre, width=50)
 liste_materiel.grid(row=6, column=0, columnspan=2, pady=10)
 
