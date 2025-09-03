@@ -27,6 +27,13 @@ conn = mysql.connector.connect(
 
 def get_user_from_db(user_id):
     try:
+        conn = mysql.connector.connect(
+            host="localhost",
+            user="root",      
+            password="DB_@Dmin", 
+            database="utilisateurs"
+        )
+
         cursor = conn.cursor()
         cursor.execute("SELECT nom, prenom, lieu FROM utilisateurs WHERE id=%s", (user_id,))
         row = cursor.fetchone()
