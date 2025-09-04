@@ -29,9 +29,10 @@ def verif_requirements():
 
 
 def ouvrir_parametres():
-    messagebox.showinfo("Paramètres", "Ici, vous pouvez ajouter vos paramètres.")
-
-
+    try:
+        subprocess.Popen(["python", "parametre.py"])
+    except subprocess.CalledProcessError as e:
+        messagebox.showerror("Erreur", f"Échec lancement parametre.py:\n{e}")
 def gestion_materiel():
     try:
         subprocess.Popen(["python", "gestion-materiel.py"])

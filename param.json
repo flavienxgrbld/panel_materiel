@@ -1,0 +1,7 @@
+{
+    "serveur": "localhost",
+    "port": 3306,
+    "utilisateur": "administrateur",
+    "mot_de_passe": "admin1234",
+    "debug": true
+}
