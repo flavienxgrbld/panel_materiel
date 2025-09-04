@@ -1,4 +1,4 @@
 fpdf
 datetime
 qrcode
-mysql.connector
+psycopg2

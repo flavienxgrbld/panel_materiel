@@ -35,6 +35,7 @@ def verif_requirements():
         valid_label.grid_remove()
         btn_interface1.grid(column=0, row=0, padx=10, pady=10)
         btn_interface2.grid(column=1, row=0, padx=10, pady=10)
+        btn_parametres.grid(column=2, row=0, padx=10, pady=10)
     except subprocess.CalledProcessError as e:
         messagebox.showerror("Erreur", f"Échec installation requirements:\n{e}")
     loading_label.grid_remove()

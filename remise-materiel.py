@@ -6,7 +6,7 @@ from datetime import date
 import os
 from datetime import datetime
 import qrcode
-import mysql.connector
+import psycopg2
 import json
 
 
@@ -21,20 +21,19 @@ with open("param.json", "r", encoding="utf-8") as f:
 
 def get_user_from_db(user_id):
     try:
-        conn = mysql.connector.connect(
+        conn = psycopg2.connect(
             host=params["host"],
             user=params["user"],
             password=params["password"],
-            database=params["database"]
+            dbname=params["database"]
         )
-
         cursor = conn.cursor()
         cursor.execute("SELECT nom, prenom, lieu FROM utilisateurs WHERE id=%s", (user_id,))
         row = cursor.fetchone()
         conn.close()
         return row
     except Exception as e:
-        messagebox.showerror("Erreur", f"Connexion MySQL échouée : {e}")
+        messagebox.showerror("Erreur", f"Connexion PostgreSQL échouée : {e}")
         return None
 
 def submit_user():

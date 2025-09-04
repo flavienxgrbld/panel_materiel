@@ -3,5 +3,5 @@
     "user": "root",
     "password": "DB_@Dmin",
     "database": "utilisateurs",
-    "chemin_fichier": "C:/REPO/fichiers"
+    "chemin_fichier": "C:\\REPO\\fichiers"
 }
