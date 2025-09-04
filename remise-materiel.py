@@ -19,11 +19,6 @@ with open("param.json", "r", encoding="utf-8") as f:
 
 
 
-
-
-
-
-
 def get_user_from_db(user_id):
     try:
         conn = mysql.connector.connect(
