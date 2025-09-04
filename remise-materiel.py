@@ -119,7 +119,11 @@ def generate_pdf(nom, prenom, lieu, items):
         messagebox.showerror("Erreur", "La liste des items est vide.")
         return
 
-    date_remise = date.today().strftime("%d/%m/%Y")
+
+
+
+    date_remise = entry_date.get() if date_active.get() else date.today().strftime("%d/%m/%Y")
+
 
     pdf = FicheRemisePDF()
     pdf.add_page()
@@ -174,6 +178,19 @@ entry_id_utilisateur.grid(column=1, row=0, sticky=W, pady=5)
 btn_submit = ttk.Button(frame, text="🔍 Rechercher", command=submit_user)
 btn_submit.grid(column=2, row=0, sticky=W, padx=5)
 
+def toggle_date_entry():
+    if date_active.get():
+        label_date.grid(column=0, row=5, sticky=W, padx=(0, 10), pady=5)
+        entry_date.grid(column=1, row=5, sticky=W, pady=5)
+        entry_date.delete(0, END)
+        entry_date.insert(0, date.today().strftime("%d/%m/%Y"))  # Affiche date du jour
+        entry_date.config(state="normal")
+    else:
+        entry_date.delete(0, END)
+        entry_date.grid_remove()
+        label_date.grid_remove()
+
+
 
 items = []
 
@@ -209,6 +226,9 @@ def afficher_items():
     for i, item in enumerate(items, 1):
         text_items.insert(END, f"{i}. Qté: {item['qte']}, Matériel: {item['materiel']}, Suivi: {item['suivi']}\n")
 
+def clear_items():
+    items.clear()
+    afficher_items()
 
 
 ttk.Label(frame, text="Nom:").grid(column=0, row=1, sticky=W, padx=(0, 10), pady=5)
@@ -226,25 +246,40 @@ ttk.Label(frame, text="Lieu:").grid(column=0, row=3, sticky=W, padx=(0, 10), pad
 entry_lieu = ttk.Entry(frame, width=30)
 entry_lieu.grid(column=1, row=3, sticky=W, pady=5)
 
-ttk.Separator(frame, orient=HORIZONTAL).grid(column=0, row=4, columnspan=3, sticky="ew", pady=15)
+# ✅ Checkbox sous "Lieu"
+date_active = BooleanVar()
+check_date = ttk.Checkbutton(frame, text="Modifier la date", variable=date_active, command=toggle_date_entry)
+check_date.grid(column=1, row=4, sticky=W, pady=(0, 5))
 
-ttk.Label(frame, text="Quantité:").grid(column=0, row=5, sticky=W, padx=(0, 10), pady=5)
+# ✅ Champ "Date" désactivé par défaut
+# ✅ Créer les widgets "Date" mais NE PAS les afficher tout de suite
+label_date = ttk.Label(frame, text="Date:")
+entry_date = ttk.Entry(frame, width=30, state="normal")  # État modifié via la fonction
+
+
+# ✅ Décalage de tous les éléments suivants d'une ligne (à partir de ligne 6)
+ttk.Separator(frame, orient=HORIZONTAL).grid(column=0, row=6, columnspan=3, sticky="ew", pady=15)
+
+ttk.Label(frame, text="Quantité:").grid(column=0, row=7, sticky=W, padx=(0, 10), pady=5)
 entry_quantite = ttk.Entry(frame, width=30)
-entry_quantite.grid(column=1, row=5, sticky=W, pady=5)
+entry_quantite.grid(column=1, row=7, sticky=W, pady=5)
 
-ttk.Label(frame, text="Matériel:").grid(column=0, row=6, sticky=W, padx=(0, 10), pady=5)
+ttk.Label(frame, text="Matériel:").grid(column=0, row=8, sticky=W, padx=(0, 10), pady=5)
 entry_materiel = ttk.Entry(frame, width=30)
-entry_materiel.grid(column=1, row=6, sticky=W, pady=5)
+entry_materiel.grid(column=1, row=8, sticky=W, pady=5)
 
-ttk.Label(frame, text="Suivi (N° de série):").grid(column=0, row=7, sticky=W, padx=(0, 10), pady=5)
+ttk.Label(frame, text="Suivi (N° de série):").grid(column=0, row=9, sticky=W, padx=(0, 10), pady=5)
 entry_suivi = ttk.Entry(frame, width=30)
-entry_suivi.grid(column=1, row=7, sticky=W, pady=5)
+entry_suivi.grid(column=1, row=9, sticky=W, pady=5)
 
 btn_ajouter = ttk.Button(frame, text="➕ Ajouter item", command=ajouter_item)
-btn_ajouter.grid(column=1, row=8, sticky=W, pady=(10, 5))
+btn_ajouter.grid(column=1, row=10, sticky=W, pady=(10, 5))
 
 text_items = Text(frame, height=10, width=70, wrap='word', relief='solid', borderwidth=1)
-text_items.grid(column=0, row=9, columnspan=3, pady=15)
+text_items.grid(column=0, row=11, columnspan=3, pady=15)
+
+btn_clear_items = ttk.Button(frame, text="🗑️ Vider les items", command=clear_items)
+btn_clear_items.grid(column=2, row=12, sticky=E, pady=10)
 
 btn_generate_pdf = ttk.Button(frame, text="📄 Générer PDF", command=lambda: generate_pdf(
     entry_nom.get(),
@@ -252,6 +287,6 @@ btn_generate_pdf = ttk.Button(frame, text="📄 Générer PDF", command=lambda: 
     entry_lieu.get(),
     items
 ))
-btn_generate_pdf.grid(column=1, row=10, sticky=W, pady=10)
-
+btn_generate_pdf.grid(column=1, row=12, sticky=W, pady=10)
+                                                                                                                                                                  
 oWindows.mainloop()
