@@ -7,18 +7,17 @@ import os
 from datetime import datetime
 import qrcode
 import mysql.connector
-
+import json
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
-conn = mysql.connector.connect(
-            host="localhost",
-            user="root",      
-            password="DB_@Dmin", 
-            database="utilisateurs"
-        )
+
+with open("param.json", "r", encoding="utf-8") as f:
+    params = json.load(f)
+
+
 
 
 
@@ -28,10 +27,10 @@ conn = mysql.connector.connect(
 def get_user_from_db(user_id):
     try:
         conn = mysql.connector.connect(
-            host="localhost",
-            user="root",      
-            password="DB_@Dmin", 
-            database="utilisateurs"
+            host=params["host"],
+            user=params["user"],
+            password=params["password"],
+            database=params["database"]
         )
 
         cursor = conn.cursor()
@@ -58,7 +57,6 @@ def submit_user():
         entry_nom.insert(0, nom)
         entry_prenom.insert(0, prenom)
         entry_lieu.insert(0, lieu)
-        messagebox.showinfo("Succès", f"Utilisateur trouvé : {prenom} {nom}")
     else:
         messagebox.showerror("Erreur", "Aucun utilisateur trouvé avec cet ID.")
 
