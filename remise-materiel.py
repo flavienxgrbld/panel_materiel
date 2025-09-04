@@ -110,10 +110,6 @@ def generate_pdf(nom, prenom, lieu, items):
     if not items:
         messagebox.showerror("Erreur", "La liste des items est vide.")
         return
-
-
-
-
     date_remise = entry_date.get() if date_active.get() else date.today().strftime("%d/%m/%Y")
 
 
