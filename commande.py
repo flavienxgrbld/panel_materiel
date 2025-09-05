@@ -5,7 +5,7 @@ import json
 import os
 
 FICHIER_JSON = "commandes.json"
-STATUTS = ["Nouveau", "En cours", "Livré", "Annulé"]
+STATUTS = ["Nouveau", "En cours", "préparé", "distribué", "Annulé"]
 
 def charger_commandes():
     if os.path.isfile(FICHIER_JSON):
@@ -34,20 +34,26 @@ def afficher_produits_commande():
         listbox_produits.insert(tk.END, f"{prod['Produit']} (x{prod['Quantité']})")
 
 def ajouter_commande():
-    client = entry_client.get()
+    idclient = entry_idclient.get()
+    nom = entry_nom.get()
+    prenom = entry_prenom.get()
     date_commande = entry_date.get()
     statut = combo_statut.get()
-    if all([client, date_commande, statut]) and produits_commande:
+    if all([idclient, nom, prenom, date_commande, statut]) and produits_commande:
         commandes.append({
-            "Client": client,
+            "IDClient": idclient,
+            "Nom": nom,
+            "Prénom": prenom,
             "Produits": produits_commande.copy(),
             "Date": date_commande,
             "Statut": statut
         })
         sauvegarder_commandes()
         afficher_commandes()
-        afficher_clients()  # <-- Ajout ici
-        entry_client.delete(0, tk.END)
+        afficher_clients()
+        entry_idclient.delete(0, tk.END)
+        entry_nom.delete(0, tk.END)
+        entry_prenom.delete(0, tk.END)
         entry_date.delete(0, tk.END)
         combo_statut.set("")
         produits_commande.clear()
@@ -60,7 +66,7 @@ def afficher_commandes(liste=None):
         tree.delete(i)
     for idx, cmd in enumerate(liste if liste is not None else commandes):
         produits_str = ", ".join([f"{p['Produit']} (x{p['Quantité']})" for p in cmd["Produits"]])
-        tree.insert("", "end", iid=idx, values=(cmd["Client"], produits_str, cmd["Date"], cmd["Statut"]))
+        tree.insert("", "end", iid=idx, values=(cmd["IDClient"], cmd["Nom"], cmd["Prénom"], produits_str, cmd["Date"], cmd["Statut"]))
 
 def supprimer_commande():
     selected = tree.selection()
@@ -69,7 +75,7 @@ def supprimer_commande():
         commandes.pop(idx)
         sauvegarder_commandes()
         afficher_commandes()
-        afficher_clients()  # <-- Ajout ici
+        afficher_clients()
     else:
         messagebox.showwarning("Sélection", "Veuillez sélectionner une commande à supprimer.")
 
@@ -78,7 +84,7 @@ def clear_commandes():
         commandes.clear()
         sauvegarder_commandes()
         afficher_commandes()
-        afficher_clients()  # <-- Ajout ici
+        afficher_clients()
 
 index_modif = None  # Ajoute cette ligne en haut du fichier
 
@@ -87,17 +93,19 @@ def modifier_commande():
     selected = tree.selection()
     if selected:
         idx_affiche = int(selected[0])
-        # Trouve la commande sélectionnée dans la liste affichée
         values = tree.item(selected, "values")
-        # Recherche l'index réel dans la liste commandes
         for i, cmd in enumerate(commandes):
             produits_str = ", ".join([f"{p['Produit']} (x{p['Quantité']})" for p in cmd["Produits"]])
-            if (cmd["Client"], produits_str, cmd["Date"], cmd["Statut"]) == values:
+            if (cmd["IDClient"], cmd["Nom"], cmd["Prénom"], produits_str, cmd["Date"], cmd["Statut"]) == values:
                 index_modif = i
                 break
         cmd = commandes[index_modif]
-        entry_client.delete(0, tk.END)
-        entry_client.insert(0, cmd["Client"])
+        entry_idclient.delete(0, tk.END)
+        entry_idclient.insert(0, cmd["IDClient"])
+        entry_nom.delete(0, tk.END)
+        entry_nom.insert(0, cmd["Nom"])
+        entry_prenom.delete(0, tk.END)
+        entry_prenom.insert(0, cmd["Prénom"])
         entry_date.delete(0, tk.END)
         entry_date.insert(0, cmd["Date"])
         combo_statut.set(cmd["Statut"])
@@ -111,20 +119,26 @@ def modifier_commande():
 
 def enregistrer_modif():
     global index_modif
-    client = entry_client.get()
+    idclient = entry_idclient.get()
+    nom = entry_nom.get()
+    prenom = entry_prenom.get()
     date_commande = entry_date.get()
     statut = combo_statut.get()
-    if all([client, date_commande, statut]) and produits_commande and index_modif is not None:
+    if all([idclient, nom, prenom, date_commande, statut]) and produits_commande and index_modif is not None:
         commandes[index_modif] = {
-            "Client": client,
+            "IDClient": idclient,
+            "Nom": nom,
+            "Prénom": prenom,
             "Produits": produits_commande.copy(),
             "Date": date_commande,
             "Statut": statut
         }
         sauvegarder_commandes()
         afficher_commandes()
-        afficher_clients()  # <-- Ajout ici
-        entry_client.delete(0, tk.END)
+        afficher_clients()
+        entry_idclient.delete(0, tk.END)
+        entry_nom.delete(0, tk.END)
+        entry_prenom.delete(0, tk.END)
         entry_date.delete(0, tk.END)
         combo_statut.set("")
         produits_commande.clear()
@@ -138,23 +152,29 @@ def rechercher_commandes():
     mot_cle = entry_recherche.get().lower()
     resultats = []
     for cmd in commandes:
-        if mot_cle in cmd["Client"].lower() or any(mot_cle in p["Produit"].lower() for p in cmd["Produits"]):
+        if (mot_cle in cmd["Nom"].lower() or mot_cle in cmd["Prénom"].lower() or
+            any(mot_cle in p["Produit"].lower() for p in cmd["Produits"])):
             resultats.append(cmd)
     afficher_commandes(resultats)
 
 def get_clients():
-    return sorted(set(cmd["Client"] for cmd in commandes))
+    # Retourne une liste de tuples (IDClient, Nom, Prénom) uniques
+    return sorted(set((cmd["IDClient"], cmd["Nom"], cmd["Prénom"]) for cmd in commandes))
 
 def afficher_clients():
     listbox_clients.delete(0, tk.END)
-    for client in get_clients():
-        listbox_clients.insert(tk.END, client)
+    for idclient, nom, prenom in get_clients():
+        listbox_clients.insert(tk.END, f"{idclient} - {nom} {prenom}")
 
 def filtrer_par_client(event):
     selection = listbox_clients.curselection()
     if selection:
-        client = listbox_clients.get(selection[0])
-        resultats = [cmd for cmd in commandes if cmd["Client"] == client]
+        ligne = listbox_clients.get(selection[0])
+        idclient, reste = ligne.split(" - ", 1)
+        nom_prenom = reste.split(" ", 1)
+        nom = nom_prenom[0]
+        prenom = nom_prenom[1] if len(nom_prenom) > 1 else ""
+        resultats = [cmd for cmd in commandes if cmd["IDClient"] == idclient and cmd["Nom"] == nom and cmd["Prénom"] == prenom]
         afficher_commandes(resultats)
 
 commandes = charger_commandes()
@@ -162,7 +182,7 @@ produits_commande = []
 
 root = tk.Tk()
 root.title("Gestion de Commandes")
-root.geometry("1200x800")
+root.geometry("1200x1000")
 root.resizable(False, False)
 
 frame_left = ttk.Frame(root, padding=20)
@@ -178,62 +198,91 @@ listbox_clients.pack(fill="both", expand=True)
 listbox_clients.bind("<<ListboxSelect>>", filtrer_par_client)
 
 # Formulaire et tableau dans frame_right
-ttk.Label(frame_right, text="Client:").grid(row=0, column=0, sticky="w")
-entry_client = ttk.Entry(frame_right)
-entry_client.grid(row=0, column=1, pady=5)
+ttk.Label(frame_right, text="ID client:").grid(row=0, column=0, sticky="w")
+entry_idclient = ttk.Entry(frame_right)
+entry_idclient.grid(row=0, column=1, pady=5)
 
-ttk.Label(frame_right, text="Produit:").grid(row=1, column=0, sticky="w")
-entry_produit = ttk.Entry(frame_right)
-entry_produit.grid(row=1, column=1, pady=5)
+style = ttk.Style()
+style.configure("Produit.TLabelframe", background="#f0f0f0", bordercolor="#444444", borderwidth=2)
+style.configure("Produit.TLabelframe.Label", foreground="#444444", font=("Arial", 10, "bold"))
 
-ttk.Label(frame_right, text="Quantité:").grid(row=2, column=0, sticky="w")
-entry_quantite = ttk.Entry(frame_right)
-entry_quantite.grid(row=2, column=1, pady=5)
+# Encadrement de la partie produit
+produit_frame = ttk.LabelFrame(frame_right, text="Produits de la commande", style="Produit.TLabelframe")
+produit_frame.grid(row=2, column=0, columnspan=2, rowspan=4, sticky="ew", padx=5, pady=10)
 
-btn_ajouter_produit = ttk.Button(frame_right, text="Ajouter produit à la commande", command=ajouter_produit)
-btn_ajouter_produit.grid(row=3, column=0, columnspan=2, pady=5)
+ttk.Label(produit_frame, text="Produit:").grid(row=0, column=0, sticky="w")
+entry_produit = ttk.Entry(produit_frame)
+entry_produit.grid(row=0, column=1, pady=5)
 
-ttk.Label(frame_right, text="Produits ajoutés:").grid(row=4, column=0, sticky="w")
-listbox_produits = tk.Listbox(frame_right, height=4, width=40)
-listbox_produits.grid(row=4, column=1, pady=5)
+ttk.Label(produit_frame, text="Quantité:").grid(row=1, column=0, sticky="w")
+entry_quantite = ttk.Entry(produit_frame)
+entry_quantite.grid(row=1, column=1, pady=5)
 
-ttk.Label(frame_right, text="Date (YYYY-MM-DD):").grid(row=5, column=0, sticky="w")
-entry_date = ttk.Entry(frame_right)
-entry_date.grid(row=5, column=1, pady=5)
+btn_ajouter_produit = ttk.Button(produit_frame, text="Ajouter produit à la commande", command=ajouter_produit)
+btn_ajouter_produit.grid(row=2, column=0, columnspan=2, pady=5)
+
+ttk.Label(produit_frame, text="Produits ajoutés:").grid(row=3, column=0, sticky="w")
+listbox_produits = tk.Listbox(produit_frame, height=4, width=40)
+listbox_produits.grid(row=3, column=1, pady=5)
+
+style.configure("Info.TLabelframe", background="#f0f0f0", bordercolor="#444444", borderwidth=2)
+style.configure("Info.TLabelframe.Label", foreground="#444444", font=("Arial", 10, "bold"))
+
+# Encadrement de la partie date/statut
+info_frame = ttk.LabelFrame(frame_right, text="Informations commande", style="Info.TLabelframe")
+info_frame.grid(row=6, column=0, columnspan=2, rowspan=2, sticky="ew", padx=5, pady=10)
+
+ttk.Label(info_frame, text="Date (YYYY-MM-DD):").grid(row=0, column=0, sticky="w")
+entry_date = ttk.Entry(info_frame)
+entry_date.grid(row=0, column=1, pady=5)
 entry_date.insert(0, datetime.now().strftime("%Y-%m-%d"))
 
-ttk.Label(frame_right, text="Statut:").grid(row=6, column=0, sticky="w")
-combo_statut = ttk.Combobox(frame_right, values=STATUTS, state="readonly")
-combo_statut.grid(row=6, column=1, pady=5)
+ttk.Label(info_frame, text="Statut:").grid(row=1, column=0, sticky="w")
+combo_statut = ttk.Combobox(info_frame, values=STATUTS, state="readonly")
+combo_statut.grid(row=1, column=1, pady=5)
 
 btn_ajouter = ttk.Button(frame_right, text="Ajouter", command=ajouter_commande)
-btn_ajouter.grid(row=7, column=0, columnspan=2, pady=10)
+btn_ajouter.grid(row=8, column=0, columnspan=2, pady=10)
 
 btn_modifier = ttk.Button(frame_right, text="Modifier", command=modifier_commande)
-btn_modifier.grid(row=8, column=0, columnspan=2, pady=5)
+btn_modifier.grid(row=9, column=0, columnspan=2, pady=5)
 
 btn_supprimer = ttk.Button(frame_right, text="Supprimer", command=supprimer_commande)
-btn_supprimer.grid(row=9, column=0, columnspan=2, pady=5)
+btn_supprimer.grid(row=10, column=0, columnspan=2, pady=5)
 
 btn_clear = ttk.Button(frame_right, text="Vider les commandes", command=clear_commandes)
-btn_clear.grid(row=10, column=0, columnspan=2, pady=5)
+btn_clear.grid(row=11, column=0, columnspan=2, pady=5)
 
-ttk.Label(frame_right, text="Recherche:").grid(row=11, column=0, sticky="w")
+ttk.Label(frame_right, text="Recherche:").grid(row=12, column=0, sticky="w")
 entry_recherche = ttk.Entry(frame_right)
-entry_recherche.grid(row=11, column=1, pady=5)
+entry_recherche.grid(row=12, column=1, pady=5)
 btn_recherche = ttk.Button(frame_right, text="Rechercher", command=rechercher_commandes)
-btn_recherche.grid(row=12, column=0, columnspan=2, pady=5)
+btn_recherche.grid(row=13, column=0, columnspan=2, pady=5)
 
 tree = ttk.Treeview(
     frame_right,
-    columns=("Client", "Produits", "Date", "Statut"),
+    columns=("IDClient", "Nom", "Prénom", "Produits", "Date", "Statut"),
     show="headings",
     height=8
 )
-for col in ("Client", "Produits", "Date", "Statut"):
+for col in ("IDClient", "Nom", "Prénom", "Produits", "Date", "Statut"):
     tree.heading(col, text=col)
-    tree.column(col, width=180)
-tree.grid(row=13, column=0, columnspan=2, pady=10)
+    tree.column(col, width=120)
+tree.grid(row=14, column=0, columnspan=2, pady=10)
+
+style.configure("Client.TLabelframe", background="#f0f0f0", bordercolor="#444444", borderwidth=2)
+style.configure("Client.TLabelframe.Label", foreground="#444444", font=("Arial", 10, "bold"))
+
+client_frame = ttk.LabelFrame(frame_right, text="Informations client", style="Client.TLabelframe")
+client_frame.grid(row=1, column=0, columnspan=2, sticky="ew", padx=5, pady=10)
+
+ttk.Label(client_frame, text="Nom:").grid(row=0, column=0, sticky="w")
+entry_nom = ttk.Entry(client_frame)
+entry_nom.grid(row=0, column=1, pady=5)
+
+ttk.Label(client_frame, text="Prénom:").grid(row=1, column=0, sticky="w")
+entry_prenom = ttk.Entry(client_frame)
+entry_prenom.grid(row=1, column=1, pady=5)
 
 afficher_commandes()
 afficher_clients()
