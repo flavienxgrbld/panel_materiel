@@ -8,7 +8,7 @@ import sys
 
 
 current_dir = os.path.dirname(os.path.abspath(__file__))  # = panel_materiel/
-requirements_path = os.path.join(current_dir, 'requirements.txt')
+requirements_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "requirements.txt")
 
 
 
@@ -19,7 +19,7 @@ def quitter():
 def verif_requirements():
     # Récupère le chemin absolu du dossier contenant ce fichier
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    requirements_path = os.path.join(base_dir, 'requirements.txt')
+    requirements_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "requirements.txt")
 
     loading_label.grid(column=0, row=2, padx=10, pady=5)
     oWindows.update_idletasks()
