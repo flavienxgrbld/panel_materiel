@@ -4,7 +4,10 @@ from datetime import datetime
 import json
 import os
 
-FICHIER_JSON = "commandes.json"
+base_dir = os.path.dirname(os.path.abspath(__file__))
+FICHIER_JSON = os.path.join(base_dir, "commandes.json")
+
+
 STATUTS = ["Nouveau", "En cours", "préparé", "distribué", "Annulé"]
 
 def charger_commandes():

@@ -5,6 +5,9 @@ import json
 import os
 import time
 
+# Obtenir le dossier où se trouve ce script
+base_dir = os.path.dirname(os.path.abspath(__file__))
+param_path = os.path.join(base_dir, "param.json")
 
 oWindows = tk.Tk()
 oWindows.title("⚙️ Configuration des Paramètres")
@@ -24,7 +27,7 @@ def quitter():
     oWindows.destroy()
 
 # Vérifie la présence de param.json, le crée si absent
-if not os.path.isfile("param.json"):
+if not os.path.isfile(param_path):
     params = {
         "host": "localhost",
         "user": "admin",
@@ -32,10 +35,10 @@ if not os.path.isfile("param.json"):
         "database": "utilisateurs",
         "chemin_fichier": "C:/REPO/fichiers"
     }
-    with open("param.json", "w", encoding="utf-8") as f:
+    with open(param_path, "w", encoding="utf-8") as f:
         json.dump(params, f, indent=4)
 else:
-    with open("param.json", "r", encoding="utf-8") as f:
+    with open(param_path, "r", encoding="utf-8") as f:
         params = json.load(f)
 
 def sauvegarder():
@@ -46,7 +49,7 @@ def sauvegarder():
         "database": entry_db.get(),
         "chemin_fichier": entry_path.get()
     }
-    with open("param.json", "w", encoding="utf-8") as f:
+    with open(param_path, "w", encoding="utf-8") as f:
         json.dump(params, f, indent=4)
     valid_label.grid(column=0, row=6, padx=10, pady=5)
     oWindows.update_idletasks()
