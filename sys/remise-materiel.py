@@ -2,22 +2,24 @@ from tkinter import *
 from tkinter import ttk, messagebox, Text, W, E, HORIZONTAL
 import tkinter as tk
 from fpdf import FPDF
-from datetime import date
+from datetime import date, datetime
 import os
-from datetime import datetime
 import qrcode
 import psycopg2
 import json
 
-
+# -------------------- CONSTANTES --------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
-
 param_path = os.path.join(os.path.dirname(BASE_DIR), "data", "param.json")
-
 logo_path = os.path.join(os.path.dirname(BASE_DIR), "data", "logo.png")
+folder_path = os.path.join(BASE_DIR, "folder")
 
+# Créer le dossier "folder" si nécessaire
+os.makedirs(folder_path, exist_ok=True)
+
+# Vérification du fichier param.json
 if not os.path.exists(param_path):
     messagebox.showerror("Erreur", f"❌ Fichier introuvable : {param_path}")
     exit()
@@ -25,7 +27,7 @@ if not os.path.exists(param_path):
 with open(param_path, "r", encoding="utf-8") as f:
     params = json.load(f)
 
-
+# -------------------- BASE DE DONNÉES --------------------
 def get_user_from_db(user_id):
     try:
         conn = psycopg2.connect(
@@ -61,12 +63,11 @@ def submit_user():
     else:
         messagebox.showerror("Erreur", "Aucun utilisateur trouvé avec cet ID.")
 
-
-
+# -------------------- CLASSE PDF --------------------
 class FicheRemisePDF(FPDF):
     def header(self):
         self.set_font("Arial", "B", 16)
-        self.image(os.path.join(BASE_DIR, logo_path), 10, 8, 33)
+        self.image(logo_path, 10, 8, 33)
         self.cell(0, 10, "MATERIEL", ln=1, align="R")
         self.set_font("Arial", "B", 11)
         self.cell(0, 10, "Fiche de remise", ln=1, align="R")
@@ -110,6 +111,7 @@ class FicheRemisePDF(FPDF):
         self.set_font("Arial", "", 10)
         self.multi_cell(0, 8, texte)
 
+# -------------------- FONCTION GENERATION PDF --------------------
 def generate_pdf(nom, prenom, lieu, items):
     if not nom or not prenom or not lieu:
         messagebox.showerror("Erreur", "Veuillez remplir les informations du collaborateur (nom, prénom, lieu).")
@@ -117,8 +119,8 @@ def generate_pdf(nom, prenom, lieu, items):
     if not items:
         messagebox.showerror("Erreur", "La liste des items est vide.")
         return
-    date_remise = entry_date.get() if date_active.get() else date.today().strftime("%d/%m/%Y")
 
+    date_remise = entry_date.get() if date_active.get() else date.today().strftime("%d/%m/%Y")
 
     pdf = FicheRemisePDF()
     pdf.add_page()
@@ -128,32 +130,29 @@ def generate_pdf(nom, prenom, lieu, items):
 
     filename = f"fiche_remise_{prenom}_{nom}_{time}.pdf"
     filename_colis = f"fiche_colis_{prenom}_{nom}_{time}.pdf"
-    pdf.output(filename)
+
+    # PDF et fiche colis dans folder
+    pdf.output(os.path.join(folder_path, filename))
 
     texte_colis = f"{nom} {prenom} \n {lieu}"
     fiche_colis = FPDF(orientation="L", unit="mm", format="A4")
     fiche_colis.add_page()
     fiche_colis.set_font("helvetica", style="B", size=90)
     fiche_colis.multi_cell(190, 40, texte_colis, align='C')
-    fiche_colis.output(filename_colis)
+    fiche_colis.output(os.path.join(folder_path, filename_colis))
 
-    qr = qrcode.QRCode(
-    version =1,
-    box_size =10,
-    border=6)
-
-    data =f"nom : {nom} \nprenom : {prenom} \nlieu {lieu} \nitems : {items}" 
+    # QR code dans folder
+    qr = qrcode.QRCode(version=1, box_size=10, border=6)
+    data = f"nom : {nom} \nprenom : {prenom} \nlieu {lieu} \nitems : {items}" 
     qr.add_data(data)
     qr.make(fit=True)
-    image = qr.make_image(fill_color="black", back_color= "white")
+    image = qr.make_image(fill_color="black", back_color="white")
     name_qrcode = f"qrcode_{nom}_{prenom}.png"
-    image.save(name_qrcode)
-    
-    messagebox.showinfo("Succès", f"✅ Génération: OK")
+    image.save(os.path.join(folder_path, name_qrcode))
 
+    messagebox.showinfo("Succès", f"✅ Génération: OK dans {folder_path}")
 
- 
-
+# -------------------- INTERFACE --------------------
 oWindows = tk.Tk()
 oWindows.title("🖥️ Préparation PC")
 oWindows.resizable(False, False)
@@ -164,67 +163,12 @@ style.theme_use('clam')
 frame = ttk.Frame(oWindows, padding=20)
 frame.grid()
 
-
-
+# --- Widgets Utilisateur ---
 ttk.Label(frame, text="ID Utilisateur:").grid(column=0, row=0, sticky=W, padx=(0, 10), pady=5)
 entry_id_utilisateur = ttk.Entry(frame, width=10)
 entry_id_utilisateur.grid(column=1, row=0, sticky=W, pady=5)
-
 btn_submit = ttk.Button(frame, text="🔍 Rechercher", command=submit_user)
 btn_submit.grid(column=2, row=0, sticky=W, padx=5)
-
-def toggle_date_entry():
-    if date_active.get():
-        label_date.grid(column=0, row=5, sticky=W, padx=(0, 10), pady=5)
-        entry_date.grid(column=1, row=5, sticky=W, pady=5)
-        entry_date.delete(0, END)
-        entry_date.insert(0, date.today().strftime("%d/%m/%Y"))  # Affiche date du jour
-        entry_date.config(state="normal")
-    else:
-        entry_date.delete(0, END)
-        entry_date.grid_remove()
-        label_date.grid_remove()
-
-
-
-items = []
-
-def ajouter_item():
-    qte = entry_quantite.get()
-    materiel = entry_materiel.get()
-    suivi = entry_suivi.get()
-
-    if not qte.isdigit() or int(qte) < 1:
-        messagebox.showerror("Erreur", "La quantité doit être un entier positif.")
-        return
-    if not materiel.strip():
-        messagebox.showerror("Erreur", "Le champ matériel est vide.")
-        return
-    if not suivi.strip():
-        messagebox.showerror("Erreur", "Le champ suivi est vide.")
-        return
-
-    item = {
-        "qte": int(qte),
-        "materiel": materiel.strip(),
-        "suivi": suivi.strip()
-    }
-    items.append(item)
-    afficher_items()
-
-    entry_quantite.delete(0, END)
-    entry_materiel.delete(0, END)
-    entry_suivi.delete(0, END)
-
-def afficher_items():
-    text_items.delete('1.0', END)
-    for i, item in enumerate(items, 1):
-        text_items.insert(END, f"{i}. Qté: {item['qte']}, Matériel: {item['materiel']}, Suivi: {item['suivi']}\n")
-
-def clear_items():
-    items.clear()
-    afficher_items()
-
 
 ttk.Label(frame, text="Nom:").grid(column=0, row=1, sticky=W, padx=(0, 10), pady=5)
 entry_nom = ttk.Entry(frame, width=30)
@@ -241,19 +185,59 @@ ttk.Label(frame, text="Lieu:").grid(column=0, row=3, sticky=W, padx=(0, 10), pad
 entry_lieu = ttk.Entry(frame, width=30)
 entry_lieu.grid(column=1, row=3, sticky=W, pady=5)
 
-# ✅ Checkbox sous "Lieu"
+# --- Checkbox et champ date ---
 date_active = BooleanVar()
-check_date = ttk.Checkbutton(frame, text="Modifier la date", variable=date_active, command=toggle_date_entry)
+check_date = ttk.Checkbutton(frame, text="Modifier la date", variable=date_active)
 check_date.grid(column=1, row=4, sticky=W, pady=(0, 5))
 
-# ✅ Champ "Date" désactivé par défaut
-# ✅ Créer les widgets "Date" mais NE PAS les afficher tout de suite
 label_date = ttk.Label(frame, text="Date:")
-entry_date = ttk.Entry(frame, width=30, state="normal")  # État modifié via la fonction
+entry_date = ttk.Entry(frame, width=30, state="normal")
 
+def toggle_date_entry():
+    if date_active.get():
+        label_date.grid(column=0, row=5, sticky=W, padx=(0, 10), pady=5)
+        entry_date.grid(column=1, row=5, sticky=W, pady=5)
+        entry_date.delete(0, END)
+        entry_date.insert(0, date.today().strftime("%d/%m/%Y"))
+        entry_date.config(state="normal")
+    else:
+        entry_date.delete(0, END)
+        entry_date.grid_remove()
+        label_date.grid_remove()
 
-# ✅ Décalage de tous les éléments suivants d'une ligne (à partir de ligne 6)
-ttk.Separator(frame, orient=HORIZONTAL).grid(column=0, row=6, columnspan=3, sticky="ew", pady=15)
+date_active.trace_add("write", lambda *args: toggle_date_entry())
+
+# --- Items ---
+items = []
+
+def ajouter_item():
+    qte = entry_quantite.get()
+    materiel = entry_materiel.get()
+    suivi = entry_suivi.get()
+    if not qte.isdigit() or int(qte) < 1:
+        messagebox.showerror("Erreur", "La quantité doit être un entier positif.")
+        return
+    if not materiel.strip():
+        messagebox.showerror("Erreur", "Le champ matériel est vide.")
+        return
+    if not suivi.strip():
+        messagebox.showerror("Erreur", "Le champ suivi est vide.")
+        return
+    item = {"qte": int(qte), "materiel": materiel.strip(), "suivi": suivi.strip()}
+    items.append(item)
+    afficher_items()
+    entry_quantite.delete(0, END)
+    entry_materiel.delete(0, END)
+    entry_suivi.delete(0, END)
+
+def afficher_items():
+    text_items.delete('1.0', END)
+    for i, item in enumerate(items, 1):
+        text_items.insert(END, f"{i}. Qté: {item['qte']}, Matériel: {item['materiel']}, Suivi: {item['suivi']}\n")
+
+def clear_items():
+    items.clear()
+    afficher_items()
 
 ttk.Label(frame, text="Quantité:").grid(column=0, row=7, sticky=W, padx=(0, 10), pady=5)
 entry_quantite = ttk.Entry(frame, width=30)
@@ -283,5 +267,6 @@ btn_generate_pdf = ttk.Button(frame, text="📄 Générer PDF", command=lambda: 
     items
 ))
 btn_generate_pdf.grid(column=1, row=12, sticky=W, pady=10)
-                                                                                                                                                                  
+
+# -------------------- BOUCLE --------------------
 oWindows.mainloop()
