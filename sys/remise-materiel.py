@@ -14,9 +14,16 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
 
-with open("param.json", "r", encoding="utf-8") as f:
-    params = json.load(f)
+param_path = os.path.join(os.path.dirname(BASE_DIR), "data", "param.json")
 
+logo_path = os.path.join(os.path.dirname(BASE_DIR), "data", "logo.png")
+
+if not os.path.exists(param_path):
+    messagebox.showerror("Erreur", f"❌ Fichier introuvable : {param_path}")
+    exit()
+
+with open(param_path, "r", encoding="utf-8") as f:
+    params = json.load(f)
 
 
 def get_user_from_db(user_id):
@@ -59,7 +66,7 @@ def submit_user():
 class FicheRemisePDF(FPDF):
     def header(self):
         self.set_font("Arial", "B", 16)
-        self.image(os.path.join(BASE_DIR, "logo.png"), 10, 8, 33)
+        self.image(os.path.join(BASE_DIR, logo_path), 10, 8, 33)
         self.cell(0, 10, "MATERIEL", ln=1, align="R")
         self.set_font("Arial", "B", 11)
         self.cell(0, 10, "Fiche de remise", ln=1, align="R")
